@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -g3 -Wall -std=c17 $(DEPFLAGS)
+CFLAGS = -g3 -Wall -std=c23 $(DEPFLAGS)
 DEPFLAGS = -MMD -MP
 LDFLAGS = -lglfw3 -lGL -lX11 -lpthread -lXrandr -lXi -ldl -lm
 LDDEBUGFLAGS = -Wl,--verbose
@@ -34,5 +34,5 @@ clean:
 
 -include $(DEPFILES)
 
-.PHONY: memtest tests clean $(BASELIB)
+.PHONY: memtest run clean $(BASELIB)
 
