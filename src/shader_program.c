@@ -47,12 +47,10 @@ void check_shader_compilation(GLuint shader) {
   glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
 
   if (!success) {
-    GLchar info[512];
+    GLchar info[512] = {0};
     glGetShaderInfoLog(shader, 512, NULL, info);
-    fprintf(stderr, "Error compiling shader %d:\n", shader);
-    fprintf(stderr, "%s\n", info);
 
-    program_abort("Failed to compile shader %d", shader);
+    program_abort("Failed to compile shader %d:\n%s\n", shader, info);
   }
 }
 
@@ -62,12 +60,10 @@ void check_shader_program_linking(GLuint program) {
   glGetProgramiv(program, GL_LINK_STATUS, &success);
 
   if (!success) {
-    GLchar info[512];
+    GLchar info[512] = {0};
     glGetProgramInfoLog(program, 512, NULL, info);
-    fprintf(stderr, "Error linking shader program %d:\n", program);
-    fprintf(stderr, "%s\n", info);
 
-    program_abort("Failed to link shader program %d", program);
+    program_abort("Failed to link shader program %d", program, info);
   }
 }
 

@@ -4,6 +4,7 @@
 #include <GLFW/glfw3.h>
 #include <stdarg.h>
 #include <stdbool.h>
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -18,7 +19,7 @@ constexpr int gl_version_major = 4;
 constexpr int gl_version_minor = 5;
 constexpr GLint initial_width = 600;
 constexpr GLint initial_height = 800;
-constexpr Color background_colors[] = {{1.0f, 0.6f, 0.0f, 1.0f}, {0.4f, 0.2f, 1.0f, 1.0f}};
+constexpr Color background_colors[] = {{{1.0f, 0.6f, 0.0f, 1.0f}}, {{0.4f, 0.2f, 1.0f, 1.0f}}};
 
 // Call on GLFW errors
 void error_callback(int error_code, const char *description) {
@@ -30,9 +31,7 @@ void error_callback(int error_code, const char *description) {
 }
 
 // Call when window resized
-void framebuffer_size_callback(GLFWwindow *window, int width, int height) {
-  unused(window);
-
+void framebuffer_size_callback([[maybe_unused]] GLFWwindow *window, int width, int height) {
   printf("Window resized to %dx%d\n", width, height);
   glViewport(0, 0, width, height);
 }
@@ -79,15 +78,15 @@ int main(void) {
   /* Set up vertices */
   /*-------------------------------------------------------------------------------------------------------------*/
   U32 background_color = 0;
-  GLfloat vertices[] = {
-      -0.5f, +0.5f, +0.0f,  // Top left
-      +0.5f, +0.5f, +1.0f,  // Top right
-      -0.5f, -0.5f, +0.0f,  // Bottom left
-      +0.5f, -0.5f, +0.0f,  // Bottom right
+  Vertex vertices[] = {
+      {{-0.5f, +0.5f, +1.0f}, {{+1.0f, +0.1f, +0.1f, +1.0f}}},  // Top left
+      {{+0.5f, +0.5f, +1.0f}, {{+0.1f, +1.0f, +0.0f, +1.0f}}},  // Top right
+      {{-0.5f, -0.5f, +1.0f}, {{+0.1f, +0.1f, +1.0f, +1.0f}}},  // Bottom left
+      {{+0.5f, -0.5f, +1.0f}, {{+1.0f, +1.0f, +0.1f, +1.0f}}},  // Bottom right
   };
-  GLubyte indices[] = {
-      0, 1, 2,  // Top right triangle
-      1, 3, 2,  // Bottom right triangle
+  Triangle indices[] = {
+      {0, 1, 2},  // Top left triangle
+      {1, 3, 2},  // Bottom right triangle
   };
 
   GLuint vao;
@@ -104,9 +103,13 @@ int main(void) {
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
   glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
-  // Set up vertex attributes to feed into the vertex shader
-  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(*vertices), (void *)0);
+  // Set up position vertex attribute
+  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(*vertices), (void *)offsetof(Vertex, position));
   glEnableVertexAttribArray(0);
+
+  // Set up color vertex attribute
+  glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(*vertices), (void *)offsetof(Vertex, color));
+  glEnableVertexAttribArray(1);
 
   // TODO: Pass command line args
 #if 0
@@ -128,7 +131,7 @@ int main(void) {
     // Draw the triangle
     glUseProgram(shader_program);
     glBindVertexArray(vao);
-    glDrawElements(GL_TRIANGLES, array_len(indices), GL_UNSIGNED_BYTE, NULL);
+    glDrawElements(GL_TRIANGLES, 3 * array_len(indices), GL_UNSIGNED_SHORT, NULL);
 
     glfwSwapBuffers(window);
     glfwPollEvents();
