@@ -1,9 +1,13 @@
 #version 450 core
 
-in vec4 color_frag;
+in VertexData {
+	vec4 color;
+} in_data;
 
-out vec4 color_out;
+uniform float brightness;
+
+out vec4 color;
 
 void main() {
-	color_out = color_frag;
+	color = vec4(brightness * in_data.color.rgb, in_data.color.a);
 }

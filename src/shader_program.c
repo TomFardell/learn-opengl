@@ -7,7 +7,7 @@
 #include "base/string.h"
 #include "utils.h"
 
-// Get number of characters in a given file (including a null terminator)
+// Get number of characters in a given file (not including a null terminator)
 static U64 get_file_length(const char *file_name) {
   FILE *file = fopen(file_name, "r");
   if (!file) {
@@ -48,7 +48,7 @@ void check_shader_compilation(GLuint shader) {
 
   if (!success) {
     GLchar info[512] = {0};
-    glGetShaderInfoLog(shader, 512, NULL, info);
+    glGetShaderInfoLog(shader, 512, nullptr, info);
 
     program_abort("Failed to compile shader %d:\n%s\n", shader, info);
   }
@@ -61,7 +61,7 @@ void check_shader_program_linking(GLuint program) {
 
   if (!success) {
     GLchar info[512] = {0};
-    glGetProgramInfoLog(program, 512, NULL, info);
+    glGetProgramInfoLog(program, 512, nullptr, info);
 
     program_abort("Failed to link shader program %d", program, info);
   }

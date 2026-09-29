@@ -1,38 +1,60 @@
 CC = gcc
 CFLAGS = -g3 -Wall -std=c23 $(DEPFLAGS)
 DEPFLAGS = -MMD -MP
-LDFLAGS = -lglfw3 -lGL -lX11 -lpthread -lXrandr -lXi -ldl -lm
+LDFLAGS =
+LDLIBS = -lglfw3 -lGL -lX11 -lpthread -lXrandr -lXi -ldl -lm 
+SANFLAGS = -fsanitize=address,undefined
 LDDEBUGFLAGS = -Wl,--verbose
 
+EXEDEF = program
+EXESAN = program_san
+
 SRCDIR = src
+BUILDDIR = build
+BUILDDIRDEF = $(BUILDDIR)/default
+BUILDDIRSAN = $(BUILDDIR)/sanitized
 BASEDIR = $(SRCDIR)/base
-BASELIB = $(BASEDIR)/libbase.a
+BASELIBDEF = $(BASEDIR)/libbase.a
+BASELIBSAN = $(BASEDIR)/libbasesan.a
 
 CFILES = $(wildcard $(SRCDIR)/*.c)
-OBJFILES = $(CFILES:.c=.o)
-DEPFILES = $(OBJFILES:.o=.d)
-EXE = program
+OBJFILES = $(CFILES:$(SRCDIR)/%.c=%.o)
+OBJFILESDEF = $(addprefix $(BUILDDIRDEF)/,$(OBJFILES))
+OBJFILESSAN = $(addprefix $(BUILDDIRSAN)/,$(OBJFILES))
+DEPFILESDEF = $(OBJFILESDEF:.o=.d)
+DEPFILESSAN = $(OBJFILESSAN:.o=.d)
 
-$(EXE): $(OBJFILES) $(BASELIB)
-	$(CC) -o $@ $^ $(EXTRALDFLAGS) $(LDFLAGS) 
+all: $(EXEDEF) $(EXESAN)
 
-$(BASELIB):
-	$(MAKE) -C $(BASEDIR)
+$(EXEDEF): $(OBJFILESDEF) $(BASELIBDEF)
+	$(CC) $(LDFLAGS) $(EXTRALDFLAGS) $^ $(LDLIBS) -o $@
 
-%.o: %.c
+$(EXESAN): $(OBJFILESSAN) $(BASELIBSAN)
+	$(CC) $(LDFLAGS) $(SANFLAGS) $(EXTRALDFLAGS) $^ $(LDLIBS) -o $@
+
+$(BASELIBDEF) $(BASELIBSAN):
+	$(MAKE) -C $(BASEDIR) $($@:$(BASEDIR)/%=%)
+
+$(BUILDDIRDEF)/%.o: $(SRCDIR)/%.c | $(BUILDDIRDEF)
 	$(CC) $(CFLAGS) $(EXTRAFLAGS) -c -o $@ $<
 
-memtest: $(EXE)
-	valgrind ./program
+$(BUILDDIRSAN)/%.o: $(SRCDIR)/%.c | $(BUILDDIRSAN)
+	$(CC) $(CFLAGS) $(SANFLAGS) $(EXTRAFLAGS) -c -o $@ $<
 
-run: $(EXE)
-	./program
+$(BUILDDIRDEF) $(BUILDDIRSAN):
+	mkdir -p $@
+
+run: $(EXEDEF)
+	./$(EXEDEF)
+
+run_san: $(EXESAN)
+	./$(EXESAN)
 
 clean:
-	rm -f $(EXE) $(SRCDIR)/*.o  $(SRCDIR)/*.d
+	rm -rf $(EXEDEF) $(EXESAN) $(BUILDDIR)
 	$(MAKE) -C $(BASEDIR) clean
 
 -include $(DEPFILES)
 
-.PHONY: memtest run clean $(BASELIB)
+.PHONY: all run run_san clean $(BASELIB)
 

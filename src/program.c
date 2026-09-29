@@ -2,11 +2,11 @@
 
 // glad must come first
 #include <GLFW/glfw3.h>
+#include <math.h>
 #include <stdarg.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdio.h>
-#include <stdlib.h>
 
 #include "base/definitions.h"
 #include "shader_program.h"
@@ -47,7 +47,21 @@ void process_input(GLFWwindow *window, U32 *background_color) {
   }
 }
 
-int main(void) {
+void set_uniforms(GLuint shader_program) {
+  GLfloat brightness = 0.5 * (sin(glfwGetTime()) + 1);
+
+  GLint brightness_location = glGetUniformLocation(shader_program, "brightness");
+
+  // TODO: Keep track of current program, as querying this every frame is inefficient
+  GLint previous_program;
+  glGetIntegerv(GL_CURRENT_PROGRAM, &previous_program);
+
+  glUseProgram(shader_program);
+  glUniform1f(brightness_location, brightness);
+  glUseProgram(previous_program);
+}
+
+int main() {
   /*---------------------------*/
   /* Set up window and shaders */
   /*-------------------------------------------------------------------------------------------------------------*/
@@ -58,8 +72,8 @@ int main(void) {
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, gl_version_minor);
   glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-  GLFWwindow *window = glfwCreateWindow(initial_width, initial_height, "Test window", NULL, NULL);
-  if (window == NULL) {
+  GLFWwindow *window = glfwCreateWindow(initial_width, initial_height, "Test window", nullptr, nullptr);
+  if (window == nullptr) {
     program_abort("Failed to create window");
   }
   glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
@@ -131,7 +145,9 @@ int main(void) {
     // Draw the triangle
     glUseProgram(shader_program);
     glBindVertexArray(vao);
-    glDrawElements(GL_TRIANGLES, 3 * array_len(indices), GL_UNSIGNED_SHORT, NULL);
+
+    set_uniforms(shader_program);
+    glDrawElements(GL_TRIANGLES, 3 * array_len(indices), GL_UNSIGNED_SHORT, nullptr);
 
     glfwSwapBuffers(window);
     glfwPollEvents();

@@ -1,11 +1,13 @@
 #version 450 core
 
 layout (location = 0) in vec3 position;
-layout (location = 1) in vec4 color_vert;
+layout (location = 1) in vec4 color;
 
-out vec4 color_frag;
+out VertexData {
+	vec4 color;
+} out_data;
 
 void main() {
 	gl_Position = vec4(position, 1.0f);
-	color_frag = color_vert;
+	out_data.color = color;
 }
