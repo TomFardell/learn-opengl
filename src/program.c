@@ -12,8 +12,8 @@
 #include "shader_program.h"
 #include "utils.h"
 
-const char *vertex_shader_file = "shaders/vertex.glsl";
-const char *fragment_shader_file = "shaders/fragment.glsl";
+const char *vertex_shader_file = "shaders/shader.vert";
+const char *fragment_shader_file = "shaders/shader.frag";
 
 constexpr int gl_version_major = 4;
 constexpr int gl_version_minor = 5;
@@ -49,8 +49,10 @@ void process_input(GLFWwindow *window, U32 *background_color) {
 
 void set_uniforms(GLuint shader_program) {
   GLfloat brightness = 0.5 * (sin(glfwGetTime()) + 1);
-
   GLint brightness_location = glGetUniformLocation(shader_program, "brightness");
+
+  GLfloat rotation = 0.1 * (2 * PI32) * glfwGetTime();
+  GLint rotation_location = glGetUniformLocation(shader_program, "rotation");
 
   // TODO: Keep track of current program, as querying this every frame is inefficient
   GLint previous_program;
@@ -58,6 +60,7 @@ void set_uniforms(GLuint shader_program) {
 
   glUseProgram(shader_program);
   glUniform1f(brightness_location, brightness);
+  glUniform1f(rotation_location, rotation);
   glUseProgram(previous_program);
 }
 
