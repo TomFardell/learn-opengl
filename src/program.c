@@ -94,10 +94,10 @@ int main() {
   /*-------------------------------------------------------------------------------------------------------------*/
   U32 background_color = 0;
   Vertex vertices[] = {
-      {{-0.5f, +0.5f, +1.0f}, {+0.0f, +1.0f}},  // Top left
-      {{+0.5f, +0.5f, +1.0f}, {+1.0f, +1.0f}},  // Top right
-      {{-0.5f, -0.5f, +1.0f}, {+0.0f, +0.0f}},  // Bottom left
-      {{+0.5f, -0.5f, +1.0f}, {+1.0f, +0.0f}},  // Bottom right
+      {{-0.5f, +0.5f, +1.0f}, {+0.0f, +1.0f}, {{+1.0f, +0.0f, +0.0f, +1.0f}}},  // Top left
+      {{+0.5f, +0.5f, +1.0f}, {+1.0f, +1.0f}, {{+0.0f, +1.0f, +0.0f, +1.0f}}},  // Top right
+      {{-0.5f, -0.5f, +1.0f}, {+0.0f, +0.0f}, {{+0.0f, +0.0f, +1.0f, +1.0f}}},  // Bottom left
+      {{+0.5f, -0.5f, +1.0f}, {+1.0f, +0.0f}, {{+1.0f, +0.0f, +1.0f, +1.0f}}},  // Bottom right
   };
   Triangle indices[] = {
       {0, 1, 2},  // Top left triangle
@@ -118,10 +118,13 @@ int main() {
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
   glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
+  // TODO: Make a function to do this and figure out all the sizes
   glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(*vertices), (void *)offsetof(Vertex, position));
   glEnableVertexAttribArray(0);
   glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(*vertices), (void *)offsetof(Vertex, texture_coords));
   glEnableVertexAttribArray(1);
+  glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, sizeof(*vertices), (void *)offsetof(Vertex, color));
+  glEnableVertexAttribArray(2);
 
   // TODO: Pass command line args
 #if 0

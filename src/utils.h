@@ -19,6 +19,7 @@ typedef union Color {
 typedef struct Vertex {
   GLfloat position[3];
   GLfloat texture_coords[2];
+  Color color;
 } Vertex;
 
 typedef GLushort Triangle[3];
