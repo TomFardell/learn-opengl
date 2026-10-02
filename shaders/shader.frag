@@ -1,13 +1,13 @@
 #version 450 core
 
 in VertexData {
-	vec4 color;
+	vec2 texture_coords;
 } in_data;
 
-uniform float brightness;
+uniform sampler2D texture_data;
 
 out vec4 color;
 
 void main() {
-	color = vec4(brightness * in_data.color.rgb, in_data.color.a);
+	color = texture(texture_data, in_data.texture_coords);
 }

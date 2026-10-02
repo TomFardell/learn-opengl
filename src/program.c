@@ -2,7 +2,6 @@
 
 // glad must come first
 #include <GLFW/glfw3.h>
-#include <math.h>
 #include <stdarg.h>
 #include <stdbool.h>
 #include <stddef.h>
@@ -10,10 +9,13 @@
 
 #include "base/definitions.h"
 #include "shader_program.h"
+#include "stb_image.h"
 #include "utils.h"
 
 const char *vertex_shader_file = "shaders/shader.vert";
 const char *fragment_shader_file = "shaders/shader.frag";
+
+const char *texture_file = "assets/tiles.png";
 
 constexpr int gl_version_major = 4;
 constexpr int gl_version_minor = 5;
@@ -48,9 +50,6 @@ void process_input(GLFWwindow *window, U32 *background_color) {
 }
 
 void set_uniforms(GLuint shader_program) {
-  GLfloat brightness = 0.5 * (sin(glfwGetTime()) + 1);
-  GLint brightness_location = glGetUniformLocation(shader_program, "brightness");
-
   GLfloat rotation = 0.1 * (2 * PI32) * glfwGetTime();
   GLint rotation_location = glGetUniformLocation(shader_program, "rotation");
 
@@ -59,7 +58,6 @@ void set_uniforms(GLuint shader_program) {
   glGetIntegerv(GL_CURRENT_PROGRAM, &previous_program);
 
   glUseProgram(shader_program);
-  glUniform1f(brightness_location, brightness);
   glUniform1f(rotation_location, rotation);
   glUseProgram(previous_program);
 }
@@ -75,7 +73,7 @@ int main() {
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, gl_version_minor);
   glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-  GLFWwindow *window = glfwCreateWindow(initial_width, initial_height, "Test window", nullptr, nullptr);
+  GLFWwindow *window = glfwCreateWindow(initial_width, initial_height, "Learning OpenGL", nullptr, nullptr);
   if (window == nullptr) {
     program_abort("Failed to create window");
   }
@@ -96,10 +94,10 @@ int main() {
   /*-------------------------------------------------------------------------------------------------------------*/
   U32 background_color = 0;
   Vertex vertices[] = {
-      {{-0.5f, +0.5f, +1.0f}, {{+1.0f, +0.1f, +0.1f, +1.0f}}},  // Top left
-      {{+0.5f, +0.5f, +1.0f}, {{+0.1f, +1.0f, +0.0f, +1.0f}}},  // Top right
-      {{-0.5f, -0.5f, +1.0f}, {{+0.1f, +0.1f, +1.0f, +1.0f}}},  // Bottom left
-      {{+0.5f, -0.5f, +1.0f}, {{+1.0f, +1.0f, +0.1f, +1.0f}}},  // Bottom right
+      {{-0.5f, +0.5f, +1.0f}, {+0.0f, +1.0f}},  // Top left
+      {{+0.5f, +0.5f, +1.0f}, {+1.0f, +1.0f}},  // Top right
+      {{-0.5f, -0.5f, +1.0f}, {+0.0f, +0.0f}},  // Bottom left
+      {{+0.5f, -0.5f, +1.0f}, {+1.0f, +0.0f}},  // Bottom right
   };
   Triangle indices[] = {
       {0, 1, 2},  // Top left triangle
@@ -120,12 +118,9 @@ int main() {
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
   glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
-  // Set up position vertex attribute
   glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(*vertices), (void *)offsetof(Vertex, position));
   glEnableVertexAttribArray(0);
-
-  // Set up color vertex attribute
-  glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(*vertices), (void *)offsetof(Vertex, color));
+  glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(*vertices), (void *)offsetof(Vertex, texture_coords));
   glEnableVertexAttribArray(1);
 
   // TODO: Pass command line args
@@ -133,6 +128,31 @@ int main() {
   // Wireframe mode
   glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 #endif
+  /*-------------------------------------------------------------------------------------------------------------*/
+
+  /*----------------*/
+  /* Set up texures */
+  /*-------------------------------------------------------------------------------------------------------------*/
+  GLuint texture;
+  glGenTextures(1, &texture);
+  glBindTexture(GL_TEXTURE_2D, texture);
+
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+  int texture_width, texture_height, texture_channels;
+  unsigned char *texture_data = stbi_load(texture_file, &texture_width, &texture_height, &texture_channels, 0);
+  if (texture_data == nullptr) {
+    program_abort("Unable to load texture file '%s'", texture_file);
+  }
+
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, texture_width, texture_height, 0, GL_RGBA, GL_UNSIGNED_BYTE,
+               texture_data);
+  glGenerateMipmap(GL_TEXTURE_2D);
+
+  stbi_image_free(texture_data);
   /*-------------------------------------------------------------------------------------------------------------*/
 
   /*-------------*/
@@ -145,11 +165,13 @@ int main() {
     glClearColor(color_args(background_colors[background_color]));
     glClear(GL_COLOR_BUFFER_BIT);
 
-    // Draw the triangle
+    set_uniforms(shader_program);
+
     glUseProgram(shader_program);
     glBindVertexArray(vao);
+    glBindTexture(GL_TEXTURE_2D, texture);
 
-    set_uniforms(shader_program);
+    // Draw the triangle
     glDrawElements(GL_TRIANGLES, 3 * array_len(indices), GL_UNSIGNED_SHORT, nullptr);
 
     glfwSwapBuffers(window);
@@ -163,6 +185,7 @@ int main() {
   glDeleteVertexArrays(1, &vao);
   glDeleteBuffers(1, &vbo);
   glDeleteBuffers(1, &ebo);
+  glDeleteTextures(1, &texture);
   glDeleteProgram(shader_program);
 
   glfwTerminate();
