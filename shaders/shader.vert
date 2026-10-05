@@ -14,7 +14,7 @@ out VertexData {
 void main() {
 	gl_Position= vec4(
 		cos(rotation) * position.x - sin(rotation) * position.y,
-		sin(rotation) * position.x + cos(rotation) * position.y, 
+		sin(rotation) * position.x + cos(rotation) * position.y,
 		position.z, 
 		1.0f
 	);
