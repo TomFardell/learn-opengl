@@ -9,7 +9,7 @@
 
 #include "base/definitions.h"
 #include "shader_program.h"
-#include "stb_image.h"
+#include "stb/stb_image.h"
 #include "utils.h"
 
 const char *vertex_shader_file = "shaders/shader.vert";
@@ -89,6 +89,7 @@ void load_texture(const char *texture_file) {
   printf("Loaded '%s' (%dx%d, %d channels)\n", texture_file, width, height, channels);
 
   GLenum color_format = (channels == 4) ? GL_RGBA : GL_RGB;
+  glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
   glTexImage2D(GL_TEXTURE_2D, 0, color_format, width, height, 0, color_format, GL_UNSIGNED_BYTE, texture_data);
   glGenerateMipmap(GL_TEXTURE_2D);
 

@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -g3 -Wall -std=c23 $(DEPFLAGS)
+CFLAGS = -g3 -Wall -std=c23 -I$(EXTINCDIR) $(DEPFLAGS)
 DEPFLAGS = -MMD -MP
 LDFLAGS =
 LDLIBS = -lglfw3 -lGL -lX11 -lpthread -lXrandr -lXi -ldl -lm 
@@ -10,19 +10,24 @@ EXEDEF = program
 EXESAN = program_san
 
 SRCDIR = src
+EXTSRCDIR = external/src
+EXTINCDIR = external/include
 BUILDDIR = build
+
 BUILDDIRDEF = $(BUILDDIR)/default
 BUILDDIRSAN = $(BUILDDIR)/sanitized
+
 BASEDIR = $(SRCDIR)/base
 BASELIBDEF = $(BASEDIR)/libbase.a
 BASELIBSAN = $(BASEDIR)/libbasesan.a
 
-CFILES = $(wildcard $(SRCDIR)/*.c)
-OBJFILES = $(CFILES:$(SRCDIR)/%.c=%.o)
+CFILES = $(wildcard $(SRCDIR)/*.c) $(wildcard $(EXTSRCDIR)/*/*.c)
+OBJFILES = $(notdir $(CFILES:%.c=%.o))
 OBJFILESDEF = $(addprefix $(BUILDDIRDEF)/,$(OBJFILES))
 OBJFILESSAN = $(addprefix $(BUILDDIRSAN)/,$(OBJFILES))
 DEPFILESDEF = $(OBJFILESDEF:.o=.d)
 DEPFILESSAN = $(OBJFILESSAN:.o=.d)
+vpath %.c $(sort $(dir $(CFILES)))
 
 all: $(EXEDEF) $(EXESAN)
 
@@ -35,10 +40,10 @@ $(EXESAN): $(OBJFILESSAN) $(BASELIBSAN)
 $(BASELIBDEF) $(BASELIBSAN):
 	$(MAKE) -C $(BASEDIR) $($@:$(BASEDIR)/%=%)
 
-$(BUILDDIRDEF)/%.o: $(SRCDIR)/%.c | $(BUILDDIRDEF)
+$(BUILDDIRDEF)/%.o: %.c | $(BUILDDIRDEF)
 	$(CC) $(CFLAGS) $(EXTRAFLAGS) -c -o $@ $<
 
-$(BUILDDIRSAN)/%.o: $(SRCDIR)/%.c | $(BUILDDIRSAN)
+$(BUILDDIRSAN)/%.o: %.c | $(BUILDDIRSAN)
 	$(CC) $(CFLAGS) $(SANFLAGS) $(EXTRAFLAGS) -c -o $@ $<
 
 $(BUILDDIRDEF) $(BUILDDIRSAN):

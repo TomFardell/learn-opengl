@@ -3,3 +3,4 @@ program_san
 *.o
 *.d
 compile_commands.json
+build/
